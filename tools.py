@@ -13,7 +13,7 @@ import datetime
 import json
 
 
-# ── Tool definitions (shown to the LLM) ───────────────────────────────────────
+# tool definitions 
 
 TOOLS = [
     {
@@ -35,7 +35,7 @@ TOOLS = [
 ]
 
 
-# ── Tool implementations ───────────────────────────────────────────────────────
+# tool implementations 
 
 _notes: list[str] = []   # in-memory note store
 
@@ -76,7 +76,7 @@ def _note(content: str) -> str:
     return f"Note saved ({len(_notes)} total)."
 
 
-# ── Dispatch ───────────────────────────────────────────────────────────────────
+# dispatch
 
 _REGISTRY: dict[str, callable] = {
     "web_search": _web_search,
