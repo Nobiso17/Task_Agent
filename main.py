@@ -16,6 +16,6 @@ DEMO_GOAL = (
 
 if __name__ == "__main__":
     goal = " ".join(sys.argv[1:]).strip() or DEMO_GOAL
-    print(f"\n🎯  Goal: {goal}\n")
+    print(f"\n  Goal: {goal}\n")
     report = run(goal)
-    print("\n✅  Done.")
+    print("\n  Done.")
