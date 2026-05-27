@@ -1,4 +1,4 @@
-# Planning_Agent
+# Task_Agent
 
 A minimal but production-ready agentic workflow built with **LangGraph** and **Claude**.
 
