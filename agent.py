@@ -41,7 +41,7 @@ class AgentState(TypedDict):
 
 def planner(state: AgentState) -> dict:
     """Break the goal into a numbered list of concrete sub-tasks."""
-    print("\n📋  PLANNER — decomposing goal…")
+    print("\nPLANNER — decomposing goal…")
 
     tool_names = ", ".join(t["name"] for t in TOOLS)
     system = SystemMessage(content=(
@@ -98,7 +98,7 @@ def executor(state: AgentState) -> dict:
     """Execute the current task, optionally calling a tool."""
     idx = state["current_task_index"]
     task = state["tasks"][idx]
-    print(f"\n⚙️   EXECUTOR — task {task['id']}: {task['description']}")
+    print(f"\nEXECUTOR — task {task['id']}: {task['description']}")
 
     user_msg = HumanMessage(content=f"Task: {task['description']}")
     history = [EXECUTOR_SYSTEM, user_msg]
@@ -115,9 +115,9 @@ def executor(state: AgentState) -> dict:
             _, tool_name, tool_input = tool_line.split(":", 2)
             tool_name = tool_name.strip()
             tool_input = tool_input.strip()
-            print(f"   🔧 calling tool '{tool_name}' with: {tool_input!r}")
+            print(f"   calling tool '{tool_name}' with: {tool_input!r}")
             tool_result = run_tool(tool_name, tool_input)
-            print(f"   ✅ tool result: {tool_result}")
+            print(f"   tool result: {tool_result}")
             history.append(HumanMessage(content=f"Tool result: {tool_result}"))
             continue
 
@@ -125,7 +125,7 @@ def executor(state: AgentState) -> dict:
         result_line = next((l for l in text.splitlines() if l.startswith("RESULT:")), None)
         result = result_line[len("RESULT:"):].strip() if result_line else text
 
-        print(f"   📝 result: {result}")
+        print(f"   result: {result}")
 
         # Mark task done
         updated_tasks = [
@@ -155,7 +155,7 @@ def executor(state: AgentState) -> dict:
 
 def summarizer(state: AgentState) -> dict:
     """Compile all task results into a final report."""
-    print("\n📊  SUMMARIZER — compiling report…")
+    print("\n  SUMMARIZER — compiling report…")
 
     results_text = "\n".join(state["task_results"])
     system = SystemMessage(content=(
@@ -169,7 +169,7 @@ def summarizer(state: AgentState) -> dict:
 
     response: AIMessage = llm.invoke([system, user])
     report = response.content.strip()
-    print(f"\n{'='*60}\n📄  FINAL REPORT\n{'='*60}\n{report}\n{'='*60}\n")
+    print(f"\n{'='*60}\n  FINAL REPORT\n{'='*60}\n{report}\n{'='*60}\n")
 
     return {"final_report": report, "messages": [system, user, response]}
 
