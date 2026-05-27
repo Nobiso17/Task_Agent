@@ -22,11 +22,11 @@ from langgraph.graph.message import add_messages
 
 from tools import TOOLS, run_tool
 
-# ── Model ──────────────────────────────────────────────────────────────────────
+# model
 
 llm = ChatAnthropic(model="claude-opus-4-5", max_tokens=2048)
 
-# ── State ──────────────────────────────────────────────────────────────────────
+# state
 
 class AgentState(TypedDict):
     goal: str                          # original user goal
@@ -37,7 +37,7 @@ class AgentState(TypedDict):
     final_report: str                  # produced by summarizer
 
 
-# ── Node: Planner ──────────────────────────────────────────────────────────────
+# planner node
 
 def planner(state: AgentState) -> dict:
     """Break the goal into a numbered list of concrete sub-tasks."""
@@ -56,7 +56,7 @@ def planner(state: AgentState) -> dict:
     response: AIMessage = llm.invoke([system, user])
     raw = response.content.strip()
 
-    # Strip markdown fences if present
+    # strip markdown fences if present
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"):
@@ -79,7 +79,7 @@ def planner(state: AgentState) -> dict:
     }
 
 
-# ── Node: Executor ─────────────────────────────────────────────────────────────
+# executor node
 
 EXECUTOR_SYSTEM = SystemMessage(content=(
     "You are an execution agent. You are given one task to complete. "
@@ -103,13 +103,13 @@ def executor(state: AgentState) -> dict:
     user_msg = HumanMessage(content=f"Task: {task['description']}")
     history = [EXECUTOR_SYSTEM, user_msg]
 
-    # Allow the LLM one round of tool use
+    # allow LLM one round of tool use
     for _ in range(3):
         response: AIMessage = llm.invoke(history)
         text = response.content.strip()
         history.append(response)
 
-        # Check if model wants to call a tool
+        # check if model wants to call a tool
         tool_line = next((l for l in text.splitlines() if l.startswith("TOOL:")), None)
         if tool_line:
             _, tool_name, tool_input = tool_line.split(":", 2)
@@ -121,13 +121,13 @@ def executor(state: AgentState) -> dict:
             history.append(HumanMessage(content=f"Tool result: {tool_result}"))
             continue
 
-        # Extract RESULT line
+        # extract result line
         result_line = next((l for l in text.splitlines() if l.startswith("RESULT:")), None)
         result = result_line[len("RESULT:"):].strip() if result_line else text
 
         print(f"   result: {result}")
 
-        # Mark task done
+        # mark task done
         updated_tasks = [
             {**t, "done": True} if t["id"] == task["id"] else t
             for t in state["tasks"]
@@ -142,7 +142,7 @@ def executor(state: AgentState) -> dict:
             "messages": history[2:],  # skip system msg already in history
         }
 
-    # Fallback
+    # fallback
     return {
         "tasks": state["tasks"],
         "current_task_index": idx + 1,
@@ -151,7 +151,7 @@ def executor(state: AgentState) -> dict:
     }
 
 
-# ── Node: Summarizer ───────────────────────────────────────────────────────────
+# summarizer node
 
 def summarizer(state: AgentState) -> dict:
     """Compile all task results into a final report."""
@@ -174,7 +174,7 @@ def summarizer(state: AgentState) -> dict:
     return {"final_report": report, "messages": [system, user, response]}
 
 
-# ── Routing ────────────────────────────────────────────────────────────────────
+# routing
 
 def should_continue(state: AgentState) -> str:
     """Loop back to executor while tasks remain, else move to summarizer."""
@@ -183,7 +183,7 @@ def should_continue(state: AgentState) -> str:
     return "summarize"
 
 
-# ── Build Graph ────────────────────────────────────────────────────────────────
+# build Graph
 
 def build_graph() -> StateGraph:
     graph = StateGraph(AgentState)
@@ -203,7 +203,7 @@ def build_graph() -> StateGraph:
     return graph.compile()
 
 
-# ── Run ────────────────────────────────────────────────────────────────────────
+# run
 
 app = build_graph()
 
